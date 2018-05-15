@@ -1,12 +1,12 @@
 const { db } = require('../services/firebase/')
-const { validateSnap } = require('./helpers')
-const createError = require('http-errors')
+const { validateSnap, errHandler } = require('./helpers')
 
 const retrieve = (req, res, next) => {
   const ref = db.ref('tasks')
 
   ref.once('value')
     .then((snap) => validateSnap(res, next, snap))
+    .catch(errHandler(next))
 }
 
 const retrieveOne = (req, res, next) => {
@@ -15,6 +15,7 @@ const retrieveOne = (req, res, next) => {
 
   ref.once('value')
     .then((snap) => validateSnap(res, next, snap))
+    .catch(errHandler(next))
 }
 
 const create = (req, res, next) => {
@@ -31,7 +32,7 @@ const create = (req, res, next) => {
     .then((newTask) => {
       res.json({ success: true, id: newTask.key })
     })
-    .catch(() => next(createError(400)))
+    .catch(errHandler(next))
 }
 
 const update = (req, res, next) => {
@@ -51,7 +52,7 @@ const update = (req, res, next) => {
 
   ref.update(payload)
     .then(() => res.json({ success: true, id: ref.key }))
-    .catch((err) => next(err))
+    .catch(errHandler(next))
 }
 
 const setDone = (req, res) => {
@@ -73,7 +74,7 @@ const remove = (req, res, next) => {
 
   ref.remove()
     .then(() => res.json({ success: true }))
-    .catch((err) => next(err))
+    .catch(errHandler(next))
 }
 
 module.exports = {

@@ -3,8 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node ./bin/www",
-    "test": "ava"
+    "dev": "node_env=DEVELOPMENT nodemon",
+    "start": "node_env=PRODUCTION node ./bin/www",
+    "test": "ava --verbose"
   },
   "dependencies": {
     "cookie-parser": "~1.4.3",
@@ -23,6 +24,7 @@
     "eslint-plugin-import": "^2.11.0",
     "eslint-plugin-node": "^6.0.1",
     "eslint-plugin-promise": "^3.7.0",
-    "eslint-plugin-standard": "^3.1.0"
+    "eslint-plugin-standard": "^3.1.0",
+    "supertest": "^3.1.0"
   }
 }
