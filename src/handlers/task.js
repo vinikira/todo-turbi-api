@@ -1,5 +1,7 @@
 const { db } = require('../services/firebase/')
 const { validateSnap } = require('./helpers')
+const createError = require('http-errors')
+
 const retrieve = (req, res, next) => {
   const ref = db.ref('tasks')
 
@@ -15,21 +17,24 @@ const retrieveOne = (req, res, next) => {
     .then((snap) => validateSnap(res, next, snap))
 }
 
-const create = (req, res) => {
-  const { name, detail, scheduled, user } = req.body
+const create = (req, res, next) => {
+  const { name, detail, scheduled } = req.body
 
-  const resp = db.ref('tasks').push({
+  const ref = db.ref('tasks')
+
+  ref.push({
     name,
     detail,
     scheduled,
-    user,
     done: false
   })
-
-  res.json({ success: true, id: resp.key })
+    .then((newTask) => {
+      res.json({ success: true, id: newTask.key })
+    })
+    .catch(() => next(createError(400)))
 }
 
-const update = (req, res) => {
+const update = (req, res, next) => {
   const { body, params } = req
   const updatable = ['name', 'detail', 'scheduled', 'done']
   const { id } = params
@@ -44,9 +49,9 @@ const update = (req, res) => {
       return payload
     }, {})
 
-  ref.update(payload).then(console.log)
-
-  res.json({ success: true, id: ref.key })
+  ref.update(payload)
+    .then(() => res.json({ success: true, id: ref.key }))
+    .catch((err) => next(err))
 }
 
 const setDone = (req, res) => {
@@ -61,11 +66,22 @@ const setNotDone = (req, res) => {
   update(req, res)
 }
 
+const remove = (req, res, next) => {
+  const { id } = req.params
+
+  const ref = db.ref(`tasks/${id}`)
+
+  ref.remove()
+    .then(() => res.json({ success: true }))
+    .catch((err) => next(err))
+}
+
 module.exports = {
   retrieve,
   retrieveOne,
   create,
   update,
   setDone,
-  setNotDone
+  setNotDone,
+  remove
 }
