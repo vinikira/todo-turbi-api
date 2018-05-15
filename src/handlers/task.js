@@ -1,17 +1,18 @@
 const { db } = require('../services/firebase/')
-
-const retrieve = (req, res) => {
-  const { user, filter } = req.query
+const { validateSnap } = require('./helpers')
+const retrieve = (req, res, next) => {
   const ref = db.ref('tasks')
 
-  ref.once('value', (snap) => res.json(snap.val()))
+  ref.once('value')
+    .then((snap) => validateSnap(res, next, snap))
 }
 
-const retrieveOne = (req, res) => {
+const retrieveOne = (req, res, next) => {
   const { id } = req.params
   const ref = db.ref(`tasks/${id}`)
 
-  ref.once('value', (snap) => res.json(snap.val()))
+  ref.once('value')
+    .then((snap) => validateSnap(res, next, snap))
 }
 
 const create = (req, res) => {
@@ -25,27 +26,36 @@ const create = (req, res) => {
     done: false
   })
 
-  console.log(resp)
-
   res.json({ success: true, id: resp.key })
 }
 
 const update = (req, res) => {
   const { body, params } = req
-  const { name, detail, scheduled, done } = body
+  const updatable = ['name', 'detail', 'scheduled', 'done']
   const { id } = params
   const ref = db.ref(`tasks/${id}`)
+
+  const payload = updatable
+    .reduce((payload, key) => {
+      if (body.hasOwnProperty(key)) {
+        payload[key] = body[key]
+      }
+
+      return payload
+    }, {})
+
+  ref.update(payload).then(console.log)
 
   res.json({ success: true, id: ref.key })
 }
 
-const makeDone = (req, res) => {
+const setDone = (req, res) => {
   req.body.done = true
 
   update(req, res)
 }
 
-const makeUnDone = (req, res) => {
+const setNotDone = (req, res) => {
   req.body.done = false
 
   update(req, res)
@@ -56,6 +66,6 @@ module.exports = {
   retrieveOne,
   create,
   update,
-  makeDone,
-  makeUnDone
+  setDone,
+  setNotDone
 }
