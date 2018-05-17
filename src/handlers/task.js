@@ -1,5 +1,5 @@
 const { db } = require('../services/firebase/')
-const { validateSnap, errHandler } = require('./helpers')
+const { validateSnap, errHandler, validateTaskSchema } = require('./helpers')
 
 const retrieve = (req, res, next) => {
   const ref = db.ref('tasks')
@@ -21,6 +21,10 @@ const retrieveOne = (req, res, next) => {
 const create = (req, res, next) => {
   const { name, detail, scheduled } = req.body
 
+  const validationResult = validateTaskSchema(req.body)
+
+  if (!validationResult.success) return res.status(400).json(validationResult)
+
   const ref = db.ref('tasks')
 
   ref.push({
@@ -39,6 +43,7 @@ const update = (req, res, next) => {
   const { body, params } = req
   const updatable = ['name', 'detail', 'scheduled', 'done']
   const { id } = params
+
   const ref = db.ref(`tasks/${id}`)
 
   const payload = updatable
